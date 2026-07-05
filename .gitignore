@@ -37,3 +37,8 @@ src/processed/
 ~$*
 src.zip
 catboost_info/
+
+# Excluded documents
+*.ipynb
+*.pptx
+*.docx
