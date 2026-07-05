@@ -1,0 +1,39 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Data and large CSV files
+*.csv
+!advanced_boosting_comparison.csv
+!full_model_comparison.csv
+!model_comparison.csv
+
+# Saved models and outputs
+*.npy
+*.joblib
+*.cbm
+src/processed/
+
+# IDE settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Temp files and backups
+~$*
+src.zip
+catboost_info/
