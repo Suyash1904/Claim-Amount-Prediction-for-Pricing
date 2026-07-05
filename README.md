@@ -1,56 +1,58 @@
 # Auto Insurance Claims Cost Modeling
 
-This repository contains the complete data science pipeline to predict auto insurance claim costs (`total_claim_amount`) at the time of claim notification. It features data preprocessing, feature engineering, target leakage prevention, and a comparative benchmark of standard and advanced machine learning algorithms.
+This repository contains an end-to-end machine learning pipeline to predict auto insurance claim costs (`total_claim_amount`) at the moment a claim is filed. It handles data preprocessing, feature engineering, strict target leakage prevention, and hyperparameter tuning across several gradient boosting algorithms.
 
 ---
 
-## 📋 Table of Contents
-* [Project Overview](#-project-overview)
-* [Data Quality & Anomalies](#-data-quality--anomalies)
-* [Target Leakage Controls](#-target-leakage-controls)
-* [Feature Engineering](#-feature-engineering)
-* [Model Comparison & Benchmark](#-model-comparison--benchmark)
-* [Project Structure](#-project-structure)
-* [How to Run](#-how-to-run)
+## Table of Contents
+* [Overview](#overview)
+* [Data Quality Notes](#data-quality-notes)
+* [The Target Leakage Problem](#the-target-leakage-problem)
+* [Feature Engineering](#feature-engineering)
+* [Model Benchmark](#model-benchmark)
+* [Project Structure](#project-structure)
+* [How to Run](#how-to-run)
 
 ---
 
-## 🔍 Project Overview
+## Overview
 Predicting the severity (cost) of an insurance claim at the time it is filed is a core problem in actuarial science and claims management. Accurate cost prediction enables insurance providers to:
 1. Optimize pricing structures and adjust policy premiums dynamically.
 2. Flag high-cost claims early for senior adjuster routing.
 3. Fast-track low-cost, low-risk claims for automatic settlement, reducing administrative overhead.
 
-Our final **CatBoost Regressor** model explains **69.96% of the variance** in claim amounts on unseen test data with a Test RMSE of **$14,139.60** and a Test MAE of **$10,425.88**.
+The best performing model (CatBoost) explains roughly 70% of the variance in claim amounts on unseen test data, achieving a Test RMSE of ~$14k and a Test MAE of ~$10k.
 
 ---
 
-## ⚠️ Data Quality & Anomalies
+## Data Quality Notes
 During Exploratory Data Analysis (EDA), we identified a critical data anomaly:
 * **Negative Policy Tenure (Policy #794731)**: The claim incident occurred on **2015-02-02**, but the policy was bound on **2015-02-22**, resulting in a tenure of **-20 days**.
-* **Implication**: This represents potential policy backdating, a system entry error, or high-risk fraud, which was flagged for risk management.
+* **Implication**: This represents potential policy backdating, a system entry error, or high-risk fraud. We flagged this for risk management and kept the data to let the model learn the anomaly.
 
 ---
 
-## 🛡️ Target Leakage Controls
+## The Target Leakage Problem
 A major challenge in claims cost modeling is target leakage. The dataset contains sub-claim breakdowns:
 * `injury_claim`
 * `property_claim`
 * `vehicle_claim`
 
-These columns sum exactly to the target `total_claim_amount`. If included, models achieve a trivial $R^2 = 1.0$, but are completely useless in production because sub-claims are settled *after* the claim has been closed. We **excluded these features** to ensure the model functions as a predictive tool at the time of claim registration. We also excluded `fraud_reported` as fraud status is determined post-incident.
+These three columns sum exactly to the target `total_claim_amount`. If included in the training data, any model will achieve a trivial $R^2 = 1.0$. However, this is textbook data leakage because sub-claims are settled and calculated *after* the claim has been closed. 
+
+To ensure this model actually works in production at the time of claim registration, we strictly dropped these features. We also dropped `fraud_reported` since fraud investigations conclude post-incident.
 
 ---
 
-## ⚙️ Feature Engineering
+## Feature Engineering
 To capture risk exposure, we engineered:
 * **`policy_tenure_at_incident`**: Days between the policy bind date and the incident date.
 * **`vehicle_age_at_incident`**: Years between the incident year and the vehicle's manufacturing year (`auto_year`). Older vehicles are more likely to be declared a total loss at lower caps, while new cars generate higher claim potential.
-* **Temporal Attributes**: `incident_month` and `incident_day_of_week` to model seasonality.
+* **Temporal Attributes**: `incident_month` and `incident_day_of_week` to capture basic seasonality.
 
 ---
 
-## 📊 Model Comparison & Benchmark
+## Model Benchmark
 
 We evaluated standard algorithms against advanced gradient boosting engines with native categorical support (using a log-transformed target).
 
@@ -65,12 +67,12 @@ We evaluated standard algorithms against advanced gradient boosting engines with
 | **CatBoost (Winner)** | **Log** | **14,817.27** | **14,162.25** | **10,455.56** | **0.6986** | **25.39%** |
 
 ### Key Takeaway:
-* **Overfitting Resolved**: Using `RandomizedSearchCV` and Early Stopping, the massive train-test gaps traditionally seen in advanced boosting (e.g. XGBoost previously hitting 97% Train R²) were completely eliminated. All models now generalize beautifully with < $1,600 train/test RMSE gaps.
-* **CatBoost's Generalization**: CatBoost's **Symmetric Trees** and native categorical handling restricted overfitting perfectly, resulting in the lowest Test RMSE of **$14,162.25** and acting as the final underwriting engine.
+* **Overfitting Resolved**: Using `RandomizedSearchCV` and early stopping, the massive train-test gaps traditionally seen in gradient boosting were completely eliminated. All models now generalize well with minimal train/test RMSE gaps.
+* **Why CatBoost Won**: CatBoost's symmetric trees and native categorical handling restricted overfitting the best, resulting in the lowest Test RMSE of $14,162.25. We serialize this specific model for the underwriting engine.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 ├── app.py                         # Streamlit Dashboard (Operationalized Model)
@@ -86,7 +88,7 @@ We evaluated standard algorithms against advanced gradient boosting engines with
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
 ### 1. Clone & Set Up Environment
 ```bash
