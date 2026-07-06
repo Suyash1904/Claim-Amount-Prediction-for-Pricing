@@ -22,9 +22,7 @@ Predicting the severity (cost) of an insurance claim at the time it is filed is 
 3. Fast-track low-cost, low-risk claims for automatic settlement, reducing administrative overhead.
 
 The best performing model (CatBoost) explains roughly 70% of the variance in claim amounts on unseen test data, achieving a Test RMSE of ~$14k and a Test MAE of ~$10k.
-
 ---
-
 ## Data Quality Notes
 During Exploratory Data Analysis (EDA), we identified a critical data anomaly:
 * **Negative Policy Tenure (Policy #794731)**: The claim incident occurred on **2015-02-02**, but the policy was bound on **2015-02-22**, resulting in a tenure of **-20 days**.
